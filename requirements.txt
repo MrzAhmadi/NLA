@@ -1,0 +1,8 @@
+streamlit
+torch
+transformers
+accelerate
+numpy
+datasets
+anthropic
+tqdm
