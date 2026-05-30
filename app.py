@@ -6,9 +6,10 @@ import torch
 
 from nla.activation_reconstructor import ActivationReconstructor
 from nla.activation_verbalizer import ActivationVerbalizer
+from nla.checkpoint_utils import load_chunked
 from nla.subject_model import GeneratedToken, SubjectModel
 
-AV_CHECKPOINT = Path("artifacts/checkpoints/av_model.pt")
+AV_CHECKPOINT = Path("artifacts/checkpoints/av_model")   # directory of part_XXXX.pt chunks
 AR_CHECKPOINT = Path("artifacts/checkpoints/ar_value_head.pt")
 
 MODEL_NAME  = "Qwen/Qwen2.5-0.5B-Instruct"
@@ -47,7 +48,7 @@ def get_subject_model(name: str) -> SubjectModel:
 def get_av(name: str) -> ActivationVerbalizer:
     av = ActivationVerbalizer(name)
     if AV_CHECKPOINT.exists():
-        av.model.load_state_dict(torch.load(AV_CHECKPOINT, map_location=av.device))
+        av.model.load_state_dict(load_chunked(AV_CHECKPOINT, map_location=av.device))
     return av
 
 

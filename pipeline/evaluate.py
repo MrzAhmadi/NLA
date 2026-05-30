@@ -11,10 +11,11 @@ from tqdm import tqdm
 
 from nla.activation_reconstructor import ActivationReconstructor
 from nla.activation_verbalizer import ActivationVerbalizer
+from nla.checkpoint_utils import load_chunked
 
 MODEL_NAME  = "Qwen/Qwen2.5-0.5B-Instruct"
 DATA_PATH   = Path("artifacts/data/explanations.pt")
-AV_CKPT     = Path("artifacts/checkpoints/av_model.pt")
+AV_CKPT     = Path("artifacts/checkpoints/av_model")   # directory of part_XXXX.pt chunks
 AR_CKPT     = Path("artifacts/checkpoints/ar_value_head.pt")
 OUT_PATH    = Path("artifacts/data/eval_results.pt")
 N_EVAL       = 200
@@ -39,7 +40,7 @@ def load_models() -> tuple[ActivationVerbalizer, ActivationReconstructor]:
     av = ActivationVerbalizer(MODEL_NAME)
     ar = ActivationReconstructor(MODEL_NAME, num_critic_layers=12)
     if AV_CKPT.exists():
-        av.model.load_state_dict(torch.load(AV_CKPT, map_location=av.device))
+        av.model.load_state_dict(load_chunked(AV_CKPT, map_location=av.device))
         print("  verbalizer checkpoint loaded")
     else:
         print("  no verbalizer checkpoint, using untrained model")

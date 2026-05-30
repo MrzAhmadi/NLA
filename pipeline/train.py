@@ -13,6 +13,7 @@ from tqdm import tqdm
 
 from nla.activation_reconstructor import AR_PROMPT_TEMPLATE, ActivationReconstructor
 from nla.activation_verbalizer import ActivationVerbalizer
+from nla.checkpoint_utils import save_chunked
 from nla.injection_utils import inject_at_marked_positions
 from nla.normalizer import normalize_activation
 
@@ -192,7 +193,7 @@ def main() -> None:
 
         pbar.set_postfix(cos=f"{math.exp(mean_reward)-1:.3f}", av=f"{av_loss.item():.4f}", ar=f"{ar_loss.item():.4f}")
 
-    torch.save(av.model.state_dict(),      SAVE_DIR / "av_model.pt")
+    save_chunked(av.model.state_dict(),    SAVE_DIR / "av_model")
     torch.save(ar.value_head.state_dict(), SAVE_DIR / "ar_value_head.pt")
     print(f"\nSaved to {SAVE_DIR}/")
     print(f"Final cos_sim: {mean_reward:.3f}")
