@@ -24,20 +24,19 @@ The results of this study demonstrate that the Activation Verbalizer has differe
 
 | Metric                    | Result              |
 | ------------------------- | ------------------- |
-| cos_sim (all tokens)      | **0.552**           |
-| cos_sim (content tokens)  | 0.535               |
-| cos_sim (function tokens) | 0.574               |
-| FVE (all tokens)          | **0.105**           |
-| FVE (content tokens)      | 0.069               |
-| Tokens above cos_sim 0.6  | **40%** (79 of 200) |
+| cos_sim (all tokens)      | **0.555**           |
+| cos_sim (content tokens)  | 0.536               |
+| cos_sim (function tokens) | 0.578               |
+| FVE (paper formula)       | **−0.361**          |
+| Tokens above cos_sim 0.6  | **41%** (82 of 200) |
 
 Distribution of cos_sim across all 200 examples:
 
 ```text
-[0.0–0.2)                                0  (0%)
+[0.0–0.2)                                1  (0%)
 [0.2–0.4)   ####                        28  (14%)
-[0.4–0.6)   #############               93  (46%)
-[0.6–0.8)   ###########                 79  (40%)
+[0.4–0.6)   #############               89  (44%)
+[0.6–0.8)   ############                82  (41%)
 [0.8–1.0)                                0  (0%)
 ```
 

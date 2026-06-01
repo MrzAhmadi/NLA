@@ -60,21 +60,23 @@ The reward is `cos_sim(AR(AV(activation)), activation)`, the round-trip fidelity
 
 The results of this project demonstrate that the Activation Verbalizer has different behavior across different token types.
 
+FVE is computed using the paper's formula: `FVE = 1 − ℒ / E[‖h − h̄‖²]`, where ℒ is mean per-dimension reconstruction MSE and the denominator is the variance of activations around their mean over the evaluation set.
+
 | Metric | Result |
 | --- | --- |
-| cos_sim mean (all) | **0.552** |
-| cos_sim (content tokens) | 0.535 |
-| cos_sim (function tokens) | 0.574 |
-| FVE mean | **0.105** |
-| Tokens above cos_sim 0.6 | **40%** |
+| cos_sim mean (all) | **0.555** |
+| cos_sim (content tokens) | 0.536 |
+| cos_sim (function tokens) | 0.578 |
+| FVE (paper formula) | **−0.361** |
+| Tokens above cos_sim 0.6 | **41%** |
 
 Distribution of cos_sim across 200 evaluation examples (seed 42):
 
 ```text
-[0.0–0.2)                                0  (0%)
+[0.0–0.2)                                1  (0%)
 [0.2–0.4)   ####                        28  (14%)
-[0.4–0.6)   #############               93  (46%)
-[0.6–0.8)   ###########                 79  (40%)
+[0.4–0.6)   #############               89  (44%)
+[0.6–0.8)   ############                82  (41%)
 [0.8–1.0)                                0  (0%)
 ```
 
@@ -86,7 +88,7 @@ At the end of this project, there are several key findings that can be highlight
 
 ### Function Words Reconstruct Better Than Content Words
 
-Furthermore, a crucial observation pertains to the token type distribution. The results demonstrate that function tokens (cos_sim 0.574) reconstruct better than content tokens (cos_sim 0.535), which is the opposite of what the paper reports for large models. This finding reveals how the system fails at small scale: the Activation Verbalizer produces descriptions that are structurally similar regardless of the input activation, and the Activation Reconstructor learns to predict the centroid of the activation distribution rather than discriminating individual tokens. Cosine similarity to that centroid is slightly higher for function words because their activations cluster near the mean of the representation space.
+Function tokens (cos_sim 0.578) reconstruct better than content tokens (cos_sim 0.536), which is the opposite of what the paper reports for large models. The negative FVE (−0.361) makes this concrete: the reconstruction is worse than predicting the mean activation, meaning the NLA has collapsed to outputting a single generic description regardless of input. The Best-5 results confirm this — all five top-scoring tokens are function words (`,`, `and`, `the`) and all five share the identical description *"The term 'concept' most closely relates to this activation vector..."*. The Activation Verbalizer learned one output that maps to the centroid, and the centroid is closest to function words because their activations cluster near the mean of the representation space. Cosine similarity hides this failure; FVE exposes it.
 
 ### Reward Hacking Under Reinforcement Learning
 
@@ -110,13 +112,23 @@ This project has focused on training with self-generated labels from Qwen 0.5B. 
 
 | Factor | This project | Paper |
 | --- | --- | --- |
-| Subject model | Qwen 0.5B (896-dim) | Claude Opus |
+| Subject model | Qwen 0.5B (896-dim) | Claude 3 (internal) |
 | Labeler | Qwen 0.5B (self-labeling) | Claude API |
 | RL algorithm | REINFORCE | GRPO |
 | Training data | 5,000 samples | Millions |
-| FVE | 0.105 | 0.60–0.80 |
+| FVE | −0.361 | 0.60–0.80 |
 
-By automation processes, it is possible to improve this result significantly. Furthermore, self-labeling is not the only available bottleneck; another important aspect is the RL algorithm stability, which GRPO addresses with group-relative advantages at the cost of higher memory usage.
+The negative FVE shows that self-labeling at 0.5B scale causes full centroid collapse — the verbalizer outputs one generic description for all inputs, and the reconstructor maps it to the mean activation. The gap to the paper is therefore not primarily about model size; it is about label quality. With a stronger labeler (e.g. a larger model or the Claude API), the verbalizer would receive discriminative training signal and FVE would recover. GRPO would further help by stabilizing the RL phase without reward hacking.
+
+---
+
+## Interactive Interface
+
+The Streamlit app ([app.py](app.py)) goes beyond the core NLA round-trip. Step 1.5 implements a **logit lens sweep**: for each of the 24 layers, the hidden state at the selected token position is projected through the final layer norm and unembedding matrix, showing which next-token prediction the model holds at each depth and at which layer that prediction stabilizes. Step 4 implements **causal steering**: after the verbalizer generates a description, the user can edit it, reconstruct a new activation from the edited text via the Activation Reconstructor, and inject that activation into the subject model at the original layer and position via a forward hook — the interface then shows the top-5 next-token predictions before and after the intervention side by side. This directly tests whether the Activation Reconstructor's learned mapping has causal influence over model behavior, which is the validation the paper describes in its intervention experiments.
+
+```bash
+python -m streamlit run app.py
+```
 
 ---
 
