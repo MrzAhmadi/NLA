@@ -72,13 +72,9 @@ FVE is computed using the paper's formula: `FVE = 1 − ℒ / E[‖h − h̄‖�
 
 Distribution of cos_sim across 200 evaluation examples (seed 42):
 
-```text
-[0.0–0.2)                                1  (0%)
-[0.2–0.4)   ####                        28  (14%)
-[0.4–0.6)   #############               89  (44%)
-[0.6–0.8)   ############                82  (41%)
-[0.8–1.0)                                0  (0%)
-```
+![cos_sim distribution](docs/figures/cos_sim_distribution.png)
+
+![Content vs function token cos_sim](docs/figures/content_vs_function.png)
 
 ---
 
@@ -93,6 +89,10 @@ Function tokens (cos_sim 0.578) reconstruct better than content tokens (cos_sim 
 ### Reward Hacking Under Reinforcement Learning
 
 Another important finding is related to the training dynamics and reward optimization. The results of the study show that, without a strong regularization constraint, the Activation Verbalizer drifts into reward hacking: it generates token sequences that maximize the Activation Reconstructor's score without producing readable natural language. This failure mode does not appear in the original paper because their training uses a KL divergence penalty against a frozen reference policy; at 0.5B scale with self-generated labels, the reward signal is strong enough to override any implicit regularization from the supervised fine-tuning initialization.
+
+### Injection Character Artifact
+
+The verbalizer output occasionally contains garbled characters (e.g. `㈎`, `書`) near the start of the generated text. This is the injection token leaking into the autoregressive output — the model sometimes copies or attends to the injected embedding position when generating the first few tokens. It is a known side effect of the embedding injection approach and does not affect the reconstruction score, which is computed on the full description.
 
 ### Qualitative Example
 
